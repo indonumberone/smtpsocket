@@ -1,0 +1,521 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{titling}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{changepage}
+\usepackage{fancyhdr}
+
+//Halaman 1
+\geometry{left=1cm, right=1cm, top=1cm, bottom=1cm}
+
+\title{\textbf{LAPORAN\\ Sistem dan Jaringan Komputer\\ Sistem Forwarding Pesan ke Email dan Web Server Berbasis Socket TCP }}
+\author{}
+\date{}
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{center}
+\vspace{-1.5cm}
+    \includegraphics[width=12cm]{IMG_0659.JPG} 
+\end{center}
+
+\vspace{1cm}
+
+\begin{center}
+    \textbf{DISUSUN OLEH :}\\[0.5cm]
+    KELOMPOK 9\\[0.7cm]
+	\begin{tabular}{@{}l @{\hskip 2cm} r@{}}
+        Muqsith Barru Pamungkas & (2423600035) \\
+        Miftakhul Zannah & (2423600046) \\
+        Andhika Rifan Rafiudins & (2423600055) \\
+    \end{tabular}
+\end{center}
+\vspace{0.1 cm}
+\begin{center}
+    \textbf{DOSEN :}\\
+    Prof. Ir. Amang Sudarsono S.T., Ph.D
+\end{center}
+
+\vfill
+
+\begin{center}
+    \textbf{PROGRAM STUDI TEKNOLOGI REKAYASA INTERNET}\\
+    \textbf{DEPARTEMEN TEKNIK ELEKTRO}\\
+    \textbf{POLITEKNIK ELEKTRONIKA NEGERI SURABAYA}\\
+    \textbf{2024/2025}
+\end{center}
+
+//ABSTRAK
+\newpage
+\pagenumbering{arabic}
+\setlength{\footskip}{10pt}
+\begin{center}
+    \textbf{ABSTRAK}\\[0.4cm]
+\end{center}
+Proyek ini bertujuan untuk mengembangkan dan mengimplementasikan sistem message forwarding berba-
+sis protokol TCP/UDP dan teknologi Common Gateway Interface (CGI) untuk mendukung pengiriman
+pesan melalui email serta penampilannya pada halaman web. Sistem ini dirancang dalam lingkungan
+jaringan lokal (LAN) dan terdiri dari tiga komponen utama: client, forwarding server, dan email server.
+Dalam alur kerjanya, client mengirimkan data berupa pesan dan alamat email yang diterima oleh forward-
+ing server melalui protokol TCP/UDP. Forwarding server memproses pesan tersebut dan meneruskannya
+ke dua jalur utama: server email untuk dikirimkan ke alamat tujuan melalui protokol SMTP menggu-
+nakan format standar MIME, dan aplikasi web berbasis CGI untuk menampilkan pesan secara dinamis di
+halaman web.
+Pengujian sistem menunjukkan bahwa komunikasi antara client dan forwarding server melalui socket
+TCP/UDP berjalan stabil dan efisien, dengan latensi yang rendah. Pesan yang dikirimkan berhasil
+diteruskan ke server email untuk dikirimkan ke alamat tujuan, dan dapat ditampilkan secara real-time
+di halaman web. Integrasi CGI memungkinkan pesan ditampilkan secara terorganisir dalam antarmuka
+web yang mudah diakses. Dengan keberhasilan ini, sistem dapat berfungsi sebagai prototipe dasar untuk
+kebutuhan komunikasi berbasis jaringan, baik di lingkungan akademik maupun industri, khususnya dalam
+skenario pengelolaan pesan di jaringan lokal
+\newline
+\newline
+\noindent Kata kunci: Message forwarding, TCP/UDP, CGI, Email server, Web-based messaging, komunikasi jaringan. 
+
+//BAB 1
+\pagebreak
+\titleformat{\section}{\centering\Large\bfseries}{BAB \Roman {section}}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+\section{\centering\\PENDAHULUAN}
+
+\subsection{Latar Belakang}
+\begin{adjustwidth}{1.4cm}{0cm}
+\quad\quad Pemahaman tentang sistem komunikasi client-server menjadi salah satu kompetensi yang harus dikuasai dalam pembelajaran teknologi informasi. Salah satu implementasi penting dari sistem ini adalah bagaimana mengintegrasikan berbagai layanan seperti email server dan web server untuk mendukung pengiriman dan penampilan pesan secara terstruktur dan efisien. Untuk mencapai hal tersebut, diperlukan pemahaman mendalam mengenai protokol komunikasi seperti TCP/UDP yang digunakan untuk menjalin koneksi antara client dan server, serta mekanisme forwarder server yang berfungsi sebagai perantara dalam pengiriman pesan ke layanan tujuan.
+
+Dalam konteks ini, pengiriman pesan ke email server melalui protokol email client-server menjadi salah satu metode utama untuk mendistribusikan informasi langsung ke penerima. Di sisi lain, penggunaan Common Gateway Interface (CGI) memungkinkan web server menampilkan data secara dinamis, sehingga pesan yang diterima dari client dapat diakses dan dilihat melalui antarmuka web. Tugas ini bertujuan untuk memberikan pemahaman mendalam tentang cara kerja komponen-komponen tersebut dan bagaimana mengintegrasikannya dalam sebuah sistem yang andal.
+
+Melalui tugas ini, diharapkan mahasiswa mampu mengaplikasikan teori yang telah dipelajari ke dalam praktik, serta memiliki kemampuan analisis untuk merancang sistem yang efisien dan sesuai kebutuhan. Hal ini tidak hanya bermanfaat dalam konteks akademik, tetapi juga sebagai persiapan menghadapi tantangan dunia kerja di bidang teknologi informasi dan komunikasi.
+\end{adjustwidth}
+
+\subsection{Masalah}
+\setlength{\leftmargini}{1.75cm}
+\begin{enumerate}
+\item Bagaimana cara membangun sistem pengiriman pesan antara client dan server forwarder menggunakan komunikasi socket TCP?
+\item Bagaimana cara memforward pesan dari client melalui forwarder server ke email server menggunakan pengiriman email melalui protokol SMTP?
+\item Bagaimana cara memforward pesan dari client ke web server berbasis CGI dan menampilkan pesan tersebut di halaman web yang menggunakan CGI?
+\end{enumerate}
+
+\subsection{Solusi dan Rencana Realisasi Solusi}
+\begin{adjustwidth}{1.4cm}{0cm}
+\quad Untuk membangun sistem pengiriman pesan antara client dan server forwarder menggunakan komunikasi socket TCP, langkah pertama adalah membuat server socket di sisi server yang dapat menerima koneksi dari client. Server ini akan mendengarkan pada port tertentu dan menerima pesan yang dikirimkan oleh client melalui koneksi TCP. Di sisi client, aplikasi yang dibangun akan menghubungkan ke server menggunakan alamat IP dan port yang sesuai, kemudian mengirimkan pesan melalui koneksi yang terjalin. Setelah pesan diterima oleh server forwarder, server akan memprosesnya dan meneruskan pesan tersebut ke tujuan yang sesuai, apakah itu email server atau web server. Selama proses ini, penting untuk mengelola koneksi dengan memastikan stabilitas dan penanganan error yang tepat, seperti pengaturan timeout yang optimal dan pengecekan status koneksi untuk memastikan pesan dikirim dengan efisien.
+
+Untuk memforward pesan dari client melalui forwarder server ke email server menggunakan pengiriman email melalui protokol SMTP, setelah server forwarder menerima pesan dari client, server harus terhubung dengan email server menggunakan SMTP. Server forwarder akan menggunakan pustaka SMTP seperti `smtplib` di Python untuk membuat koneksi dengan server email, dan kemudian mengirimkan pesan yang diterima dari client sebagai email. Pada tahap ini, server forwarder akan mengirimkan pesan client dengan menggunakan informasi SMTP, termasuk alamat server, port, serta kredensial autentikasi yang diperlukan untuk memastikan pengiriman yang berhasil. Selama proses pengiriman, penting untuk menangani kemungkinan error, seperti kegagalan koneksi atau kredensial yang salah, untuk memastikan bahwa email berhasil dikirim dan diterima dengan benar oleh email server tujuan.
+
+Selanjutnya, untuk memforward pesan dari client ke web server berbasis CGI dan menampilkan pesan tersebut di halaman web, server forwarder akan mengonversi pesan yang diterima menjadi format yang dapat diproses oleh web server CGI, seperti URL encoded atau data JSON. Setelah itu, server forwarder mengirimkan permintaan HTTP, misalnya menggunakan metode POST, ke web server CGI dengan membawa pesan tersebut dalam body permintaan. Di sisi web server, CGI script akan menangani permintaan yang masuk, membaca data yang dikirimkan, dan menampilkannya di halaman web. CGI script, yang dapat ditulis menggunakan bahasa pemrograman seperti Python atau Perl, akan mengubah pesan yang diterima menjadi elemen HTML yang bisa ditampilkan di browser pengguna. Selama proses ini, penting untuk memastikan keamanan dengan melakukan validasi dan sanitasi pada pesan yang diterima agar tidak menimbulkan celah keamanan, seperti serangan XSS atau injection di web server.
+\end{adjustwidth}
+
+\pagebreak
+\section{\centering\\RENCANA JARINGAN}
+\subsection{Penjelasan Rencana Jaringan}
+\begin{adjustwidth}{1.4cm}{0cm}
+\quad\quad Proyek ini dirancang dalam lingkungan jaringan lokal (LAN) dengan arsitektur yang mendukung komunikasi berbasis protokol TCP/UDP dan protokol SMTP. Setiap komponen jaringan bekerja sama untuk memastikan pengiriman pesan berjalan secara efisien, aman, dan real-time. Berikut adalah komponen jaringan yang akan diimplementasikan:
+
+\begin{enumerate}
+    \item Client
+    \item Forwarding Server
+    \item Email Server
+    \item Web Server
+    \item Firewall
+    \item Router
+    \item Akses Internet
+\end{enumerate}
+\end{adjustwidth}
+\subsection {ISIAN}
+
+\begin{itemize}
+    \item ROUTER (ISP) : 181.123.123.2/30
+\end{itemize}
+
+INFORMASI IP PRIVATE :
+\begin{itemize}
+    \item ROUTER 10 : 192.168.5.1/24
+\end{itemize}
+\begin{itemize}
+    \item ROUTER 11 : 192.168.4.1/24
+\end{itemize}
+\begin{itemize}
+    \item ROUTER 12 : 192.168.3.1/24
+\end{itemize}
+\begin{itemize}
+    \item ROUTER 13 : 192.168.2.1/24
+\end{itemize}
+\begin{itemize}
+    \item ROUTER 14 : 192.168.1.1/24
+\end{itemize}
+
+
+\pagebreak
+
+\section{\centering\\SIMULASI DAN HASIL TEST-BED}
+
+\subsection{Test Ping dan Traceroute Antar Departement}
+\begin{enumerate}
+\item Ping dan Traceroute PC Research \& Development (R\&D) Department $\rightarrow$ PC Product Development Department (192.168.5.2 ke 192.168.4.2)
+    \begin{itemize}
+        \item Ping
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image9.png} 
+    \end{center}
+    \begin{itemize}
+        \item Traceroute
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image11.png} 
+    \end{center}
+   
+\item Ping PC dan Traceroute Research \& Development (R\&D) Department $\rightarrow$ Sales dan Marketing Department (192.168.5.2 ke 192.168.3.2)
+     \begin{itemize}
+        \item Ping
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image10.png} 
+    \end{center}
+    \begin{itemize}
+        \item Traceroute
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image13.png} 
+    \end{center}
+
+\item Ping dan Traceroute Research \& Development (R\&D) Department $\rightarrow$ Customer Support Department (192.168.5.2 ke 192.168.2.2)
+    \begin{itemize}
+        \item Ping
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image12.png} 
+    \end{center}
+    \begin{itemize}
+        \item Traceroute
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image15.png} 
+    \end{center}
+
+\item Ping dan Traceroute Research \& Development 
+ (R\&D)$\rightarrow$ IT dan Server Management Department
+    \begin{itemize}
+        \item Ping
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image14.png} 
+    \end{center}
+    \begin{itemize}
+        \item Traceroute
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image17.png} 
+    \end{center}
+\end{enumerate}
+
+\clearpage
+\subsection{Test Ping dan Traceroute Semua Depertemen ke ISP}
+\begin{enumerate}
+\item Research \& Development (R\&D) Department
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image18.png} 
+    \end{center}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image20.png} 
+    \end{center}
+
+\item Product Development Department
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image18.png} 
+    \end{center}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image19.png} 
+    \end{center}
+
+\item Sales \& Marketing Department
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image18.png} 
+    \end{center}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image22.png} 
+    \end{center}
+
+\item Customer Support Department
+\begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image23.png} 
+    \end{center}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image24.png} 
+    \end{center}
+
+\item IT \& Server Management Department
+\begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image25.png} 
+    \end{center}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image26.png} 
+    \end{center}
+\end{enumerate}
+
+\clearpage
+\subsection{Test FTP, DNS, WEB dan EMAIL}
+\begin{enumerate}
+\item FTP (File Transfer Protocol)
+    \begin{itemize}
+        \item Login :
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image27.png} 
+    \end{center}
+    \begin{itemize}
+        \item Check Directory :
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image28.png} 
+    \end{center}
+    \begin{itemize}
+        \item Get File :
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image1.png} 
+    \end{center}
+    \begin{itemize}
+        \item Transfer File :
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image2.png} 
+    \end{center}
+
+\clearpage
+\item Web dan DNS
+    \begin{itemize}
+        \item Web tanpa DNS
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image3.png} 
+    \end{center}
+    \begin{itemize}
+        \item Web dengan DNS
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=12cm]{BAB 3/image4.png} 
+    \end{center}
+\end{enumerate}
+
+\subsection{Email}
+Tes kirim email dari user2@aiquantum.com (Customer Support Department) ke user13@aiquantum.com (Research \& Development (R\&D) Department)\\
+Proses :
+    \begin{itemize}
+        \item Penulisan (user2@aiquantum.com) :
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.2 cm}
+        \includegraphics[width=12cm]{BAB 3/image5.png} 
+    \end{center}
+    \begin{itemize}
+        \item Proses Pengiriman :
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.2 cm}
+        \includegraphics[width=12cm]{BAB 3/image6.png} 
+    \end{center}
+
+\clearpage
+    \begin{itemize}
+        \item Pengecheckan Inbox email(user13@aiquantum.com): 
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.2 cm}
+        \includegraphics[width=12cm]{BAB 3/image7.png} 
+    \end{center}
+    \begin{itemize}
+        \item Isi Email yang dikirm : 
+    \end{itemize}
+    \begin{center}
+    \vspace{-0.2 cm}
+        \includegraphics[width=12cm]{BAB 3/image8.png} 
+    \end{center}
+\subsection{Data Dalam Topologi}
+    
+    \textbf{Berikut tabel routing dari beberapa router yang telah dikonfigurasi}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|>{\centering\arraybackslash}m{4cm}|>{\centering\arraybackslash}m{4cm}|>{\centering\arraybackslash}m{4cm}|>{\centering\arraybackslash}m{3cm}|}
+        \hline
+        \textbf{Destination Network} & \textbf{Subnet Mask} & \textbf{Gateway} & \textbf{Interface} \\ \hline
+        192.168.5.0 & 255.255.255.0 & N/A & Gig0/0 \\ \hline
+        192.168.3.0 & 255.255.255.0 & N/A & Gig0/1 \\ \hline
+        192.168.4.0 & 255.255.255.0 & N/A & Gig0/2 \\ \hline
+        192.168.2.0 & 255.255.255.0 & N/A & Gig0/3 \\ \hline
+        192.168.1.0 & 255.255.255.0 & N/A & Gig0/4 \\ \hline
+        192.123.12.0 & 255.255.255.0 & N/A & Gig0/5 \\ \hline
+    \end{tabular}
+    \caption{Routing Table for Main Router}
+    \label{tab:routing}
+\end{table}
+
+\begin{enumerate}
+\item Rute Router ISP
+
+ \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Rute Router ISP.jpg} 
+    \end{center}
+
+ \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Rute Router ISP1.jpg} 
+    \end{center}
+
+\item Tabel routing Router 18 (Router PT)
+ \begin{center}
+    \vspace{-0.3 cm}
+        \includegraphics[width=11cm]{Routing Router 18.jpg} 
+    \end{center}
+     \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=11cm]{Routing Router 18-1.jpg} 
+    \end{center}
+
+\clearpage
+\item Tabel routing router 14 (IT and Server Management Department)
+ \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Routing Router 14.jpg} 
+    \end{center}
+
+ \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Routing Router 14-1.jpg} 
+    \end{center}
+
+\item Tabel routing router 13 (Customer Support Department)
+     \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=11cm]{Routing Router 13.jpg} 
+    \end{center}
+
+     \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=11cm]{Routing Router 13-1.jpg} 
+    \end{center}
+
+\item Tabel routing router 12 (Sales and Marketing Department)
+ \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Routing Router 12.jpg} 
+    \end{center}
+
+     \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Routing Router 12-1.jpg} 
+    \end{center}
+\clearpage
+\item Tabel routing router 11 (Product Development Department)
+ \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=11cm]{Routing Router 11.jpg} 
+    \end{center}
+
+     \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Routing Router 11-1.jpg} 
+    \end{center}
+    
+\item Tabel routing router 10(Research and Development Department)
+     \begin{center}
+    \vspace{-0.5 cm}
+        \includegraphics[width=12cm]{Routing Router 10.jpg} 
+    \end{center}
+
+     \begin{center}
+    \vspace{-0.2 cm}
+        \includegraphics[width=12cm]{Routing Router 10-1.jpg} 
+    \end{center}
+\end{enumerate}
+\clearpage
+
+
+\section{\centering\\HASIL IMPLEMENTASI DAN ANALISA}
+\subsection{Hasil Implementasi}
+\begin{minipage}[t]{\linewidth}
+    \quad\quad Lapisan ini terdiri dari sebuah router yang menghubungkan WAN ke sebuah jaringan perusahaan AI. Dalam hal ini adalah router utama yaitu router 10 sebagai penghubung antara IT \& Server Management Department, router 13 dari Customers Support Department, router 12 dari Sales \& Marketing Department, router 11 dari Product Development Department dan router 10 dari Research \& Development.
+\end{minipage}
+
+
+\begin{enumerate}
+    \item \textbf{Konfigurasi Router dan Switch}
+    \begin{itemize}
+        \item Setiap router dan switch dikonfigurasi sesuai dengan kebutuhan masing-masing departemen.
+        \item Pengaturan IP address dilakukan pada setiap perangkat untuk memastikan setiap departemen memiliki jaringan yang terisolasi dan aman.
+    \end{itemize}
+   \item \textbf{Tes Koneksi dan Transfer Data}
+    \begin{itemize}
+        \item Dalam pengujian ini kita menguji konektivitas antar perangkat dalam jaringan dan termasuk ping serta traceroute.
+        \item Melakukan uji transfer data untuk mengetahui bahwa data dapat ditrasnfer dengan efisien dalam jaringan dan tidak ada kesalahan.
+    \end{itemize}
+      \item \textbf{Pengaturan Routing}
+    \begin{itemize}
+        \item Setiap router harus dikonfigurasi dengan tabel routing yang sesuai agar paket data dikirim ke tujuan yang benar.
+        \item Setiap router harus dikonfigurasi dengan tabel routing yang sesuai agar paket data dikirim ke tujuan yang benar.
+    \end{itemize}
+      \item \textbf{Pengujian Koneksi}
+    \begin{itemize}
+        \item Pengujian konektivitas antar department untuk memastikan bahwa semua department saking terhubung dan dapat berkomunikasi.
+         \item Pengujian server yang digunakan untuk memastikan layanan seperti pengiriman data dan hal yang lain dapat berjalan dengan semestinya.
+    \end{itemize}
+\end{enumerate}
+
+\pagebreak
+\subsection{Gambar Topologi Hasil Implementasi}
+
+\begin{figure}[h!]
+\begin{center}
+\vspace{-0.5 cm}
+    \includegraphics[width=14cm]{Topologi 2.png} 
+    \caption{Topologi Jaringan AI Company}
+\end{center}
+\end{figure}
+
+\subsection{Analisa}
+\begin{adjustwidth}{1.5cm}{0cm}
+\quad ini analisa 
+\end{adjustwidth}
+
+\pagebreak
+
+\section{\centering\\KESIMPULAN}
+\subsection{Kesimpulan}
+\begin{adjustwidth}{1.4cm}{0cm}
+\quad\quad 
+\end{adjustwidth}
+
+
+\end{document}
