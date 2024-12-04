@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kelompok 1</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Main -->
+    <div class="content">
+      <h1 class="text-5xl font-bold text-center text-white mb-6">
+        Email Server Viewer
+      </h1>
+
+      <table
+        class="email-table table-auto w-3/4 mx-auto bg-white shadow-lg rounded-lg"
+      >
+        <thead class="bg-gray-800 text-white">
+          <tr>
+            <th class="px-6 py-2">From</th>
+            <th class="px-6 py-2">To</th>
+            <th class="px-6 py-2">Subject</th>
+            <th class="px-6 py-2">Message</th>
+            <th class="px-6 py-2">Time</th>
+          </tr>
+        </thead>
+        <tbody id="emailTableBody"></tbody>
+      </table>
+    </div>
+    <footer>
+      <p>&copy; 2024 Server Mail Kelompok 1. | Semua hak dilindungi.</p>
+    </footer>
+    <script src="script.js"></script>
+  </body>
+</html>
