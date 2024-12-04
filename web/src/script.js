@@ -67,7 +67,7 @@ function populateTable(emails) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  fetch("../server/received_email.json")
+  fetch("../../server/received_email.json")
     .then((response) => response.json())
     .then((data) => {
       populateTable(data);
