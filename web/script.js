@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
     .then((response) => response.json())
     .then((data) => {
       populateTable(data);
+      console.log(data);
     })
     .catch((error) => console.error("Error loading JSON:", error));
 });

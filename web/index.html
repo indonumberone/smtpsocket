@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Email Server Viewer - Creative Edition</title>
+    <title>Email Server Viewer - Kelompok 1</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css"
       rel="stylesheet"
@@ -14,17 +14,37 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
-    <div class="content py-10 px-4 sm:px-6 lg:px-8">
-      <!-- Dark Mode Toggle Button -->
-      <div class="text-center mb-6">
-        <button
-          id="toggleDarkMode"
-          class="text-white bg-indigo-600 p-2 rounded-full shadow-lg hover:scale-105 transition-all duration-300"
-        >
-          Toggle Dark Mode
-        </button>
+  <body class="bg-white text-gray-900 transition-all duration-300">
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 shadow-lg py-4 px-6">
+      <div class="flex items-center justify-start max-w-7xl mx-auto">
+        <!-- Left Aligned Title -->
+        <div class="text-white font-bold text-lg">
+          Email Server Viewer - Kelompok 1
+        </div>
+
+        <div class="ml-auto">
+          <button
+            id="toggleDarkMode"
+            class="text-white bg-indigo-500 hover:bg-indigo-700 p-2 rounded-full shadow-lg transition-all duration-300 focus:outline-none"
+          >
+            <i class="fas fa-moon"></i> Toggle Dark Mode
+          </button>
+        </div>
       </div>
+    </nav>
+
+    <!-- Main Title Below Navbar -->
+    <div class="text-center py-6">
+      <h1
+        class="text-4xl font-extrabold text-indigo-600 sm:text-5xl md:text-6xl"
+      >
+        KELOMPOK 1 SMTP SERVER
+      </h1>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content py-10 px-4 sm:px-6 lg:px-8">
       <div
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         id="emailCardsContainer"
@@ -36,6 +56,7 @@
       <p>&copy; 2024 Server Mail Kelompok 1 | All rights reserved.</p>
     </footer>
 
+    <!-- JavaScript -->
     <script src="script.js"></script>
   </body>
 </html>

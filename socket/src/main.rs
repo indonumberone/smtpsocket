@@ -37,12 +37,12 @@ fn send_message(email: &str) {
 }
 
 fn main() {
-    let mut sender = "ketua@kelompoksatu.com";
+    let sender = "ketua@kelompoksatu.com";
     let mut recipient = String::new();
     let mut subject = String::new();
     let mut body = String::new();
 
-    println!("=== Email Client ===");
+    println!("=== Email Client ===\n");
 
     loop {
         print!("To: ");
@@ -69,7 +69,7 @@ fn main() {
         // println!("emaile: {}", email_json);
         send_message(&email_json);
         let mut choose = String::new();
-        print!("NGIRIM MENEH??? y/n: ");
+        print!("LANJUT KIRIM LAGI ? y/n: ");
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut choose).unwrap();
         choose = choose.trim().to_string();
