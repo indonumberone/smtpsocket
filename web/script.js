@@ -53,11 +53,12 @@ function populateTable(emails) {
           <p class="text-gray-500 text-sm">${sender} to ${recipient}</p>
         </div>
       </div>
-      <p class="body text-gray-700 text-sm">${body.substring(0, 100)}...</p>
+      <p class="body text-gray-700 text-sm break-words">${body.substring(
+        0,
+        1000
+      )}...</p>
       <div class="mt-4 text-right">
-        <span class="text-gray-500 text-xs">Received on ${new Date(
-          email.date
-        ).toLocaleString()}</span>
+        <span class="text-gray-500 text-xs">Received</span>
       </div>
     `;
 
