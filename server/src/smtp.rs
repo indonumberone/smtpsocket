@@ -1,5 +1,6 @@
 // use crate::database;
 use anyhow::{Context, Result};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs::File;
@@ -17,6 +18,7 @@ pub struct Mail {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
+
 enum State {
     Fresh,
     Greeted,
@@ -48,68 +50,114 @@ impl StateMachine {
     }
 
     pub fn handle_smtp(&mut self, raw_msg: &str) -> Result<&[u8]> {
+        // let re_email = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
+        let re_email = Regex::new(r"^<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>$").unwrap();
+
+        const MAX_MSG_SIZE: usize = 10 * 1024 * 1024; // 10 MB
+
+        tracing::trace!("Received {raw_msg} in state {:?}", self.state);
         let mut msg = raw_msg.split_whitespace();
         let command = msg.next().context("received empty command")?.to_lowercase();
         let state = std::mem::replace(&mut self.state, State::Fresh);
+
         match (command.as_str(), state) {
             ("ehlo", State::Fresh) => {
+                tracing::trace!("Sending AUTH info and SIZE support");
                 self.state = State::Greeted;
-                Ok(self.ehlo_greeting.as_bytes())
+                Ok(b"250-Hello\r\n250-SIZE 10485760\r\n250 AUTH\r\n") // 10MB size limit
             }
             ("helo", State::Fresh) => {
+                tracing::trace!("Received HELO");
                 self.state = State::Greeted;
-                Ok(StateMachine::KK)
+                Ok(b"250 Hello\r\n")
+            }
+            ("noop", _) | ("help", _) => {
+                tracing::trace!("Got {command}");
+                Ok(b"250 OK\r\n")
+            }
+            ("rset", _) => {
+                tracing::trace!("Resetting state");
+                self.state = State::Fresh;
+                Ok(b"250 OK\r\n")
             }
             ("mail", State::Greeted) => {
+                tracing::trace!("Receiving MAIL");
                 let from = msg.next().context("received empty MAIL")?;
                 let from = from
                     .strip_prefix("FROM:")
-                    .context("received incorrect MAIL")?;
-                self.state = State::ReceivingRcpt(Mail {
-                    from: from.to_string(),
-                    ..Default::default()
-                });
-                Ok(StateMachine::KK)
+                    .context("received incorrect MAIL")?
+                    .trim()
+                    .to_string();
+                if re_email.is_match(&from) {
+                    tracing::debug!("Valid MAIL FROM: {from}");
+                    self.state = State::ReceivingRcpt(Mail {
+                        from: from.to_string(),
+                        ..Default::default()
+                    });
+                    Ok(b"250 OK\r\n")
+                } else {
+                    tracing::warn!("Invalid MAIL FROM address: {from}");
+                    Ok(b"501 Syntax: Invalid email address\r\n")
+                }
             }
             ("rcpt", State::ReceivingRcpt(mut mail)) => {
+                tracing::trace!("Receiving RCPT");
                 let to = msg.next().context("received empty RCPT")?;
-                let to = to.strip_prefix("TO:").context("received incorrect RCPT")?;
-                let to = to.to_lowercase();
-                if Self::legal_recipient(&to) {
-                    mail.to.push(to);
+                let to = to
+                    .strip_prefix("TO:")
+                    .context("received incorrect RCPT")?
+                    .trim();
+                if re_email.is_match(to) {
+                    tracing::debug!("Valid RCPT TO: {to}");
+                    mail.to.push(to.to_lowercase());
+                    self.state = State::ReceivingRcpt(mail);
+                    Ok(b"250 OK\r\n")
+                } else {
+                    tracing::warn!("Invalid RCPT TO address: {to}");
+                    Ok(b"501 Syntax: Invalid recipient address\r\n")
                 }
-                self.state = State::ReceivingRcpt(mail);
-                Ok(StateMachine::KK)
             }
             ("data", State::ReceivingRcpt(mail)) => {
-                self.state = State::ReceivingData(mail);
-                Ok(StateMachine::SEND_DATA_PLZ)
+                if mail.to.is_empty() {
+                    tracing::warn!("DATA command received without RCPT");
+                    Ok(b"503 Error: RCPT TO command must precede DATA\r\n")
+                } else {
+                    tracing::trace!("Ready to receive DATA");
+                    self.state = State::ReceivingData(mail);
+                    Ok(b"354 Start mail input; end with <CR><LF>.<CR><LF>\r\n")
+                }
             }
-
-            ("quit", State::ReceivingData(mail)) => {
-                self.state = State::Received(mail);
-                Ok(StateMachine::KTHXBYE)
+            ("quit", _) => {
+                tracing::trace!("Closing connection");
+                Ok(b"221 Bye\r\n")
             }
             (_, State::ReceivingData(mut mail)) => {
-                let resp = if raw_msg.ends_with("\r\n.\r\n") {
-                    StateMachine::KK
+                tracing::trace!("Appending data");
+                if raw_msg.ends_with("\r\n.\r\n") {
+                    let trimmed_data = raw_msg.trim_end_matches("\r\n.\r\n");
+                    mail.data.push_str(trimmed_data);
+                    if mail.data.len() > MAX_MSG_SIZE {
+                        tracing::warn!("Message size exceeds limit");
+                        Ok(b"552 Error: Message size exceeds maximum size\r\n")
+                    } else {
+                        tracing::trace!(
+                            "Email received: FROM: {} TO: {:?} DATA: {}",
+                            mail.from,
+                            mail.to,
+                            mail.data
+                        );
+                        self.state = State::Received(mail);
+                        Ok(b"250 OK\r\n")
+                    }
                 } else {
-                    StateMachine::HOLD_YOUR_HORSES
-                };
-                mail.data += raw_msg;
-                self.state = State::ReceivingData(mail);
-                Ok(resp)
+                    mail.data.push_str(raw_msg);
+                    self.state = State::ReceivingData(mail);
+                    Ok(b"250 Continue\r\n")
+                }
             }
-            ("rset", _) => {
-                self.state = State::Greeted; // Reset state
-                Ok(StateMachine::KK)
-            }
-            ("noop", _) => Ok(StateMachine::KK),
-            ("vrfy", _) => Ok(b"252 Cannot VRFY user, but will accept message\n"),
-            ("expn", _) => Ok(b"252 Mailing lists are not supported\n"),
-            (_, _) => {
-                // Return a 500 error for unrecognized commands
-                Ok(b"500 Syntax error, command unrecognized\n")
+            _ => {
+                tracing::warn!("Unexpected message: {raw_msg}");
+                Ok(b"500 Syntax error, command unrecognized\r\n")
             }
         }
     }
@@ -265,4 +313,11 @@ mod tests {
             assert!(sm.handle_smtp(command).is_err());
         }
     }
+}
+
+#[test]
+fn test_no_greeting() {
+    let re_email = Regex::new(r"^<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>$").unwrap();
+    let email = "<ketua@kelompoksatu.com>";
+    println!("Valid email: {}", re_email.is_match(email));
 }

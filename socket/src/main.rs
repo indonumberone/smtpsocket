@@ -11,7 +11,7 @@ struct Email {
 }
 
 fn send_message(email: &str) {
-    let server = "127.0.0.1:12345";
+    let server = "127.0.0.1:1239";
 
     match TcpStream::connect(server) {
         Ok(mut stream) => {
@@ -37,7 +37,7 @@ fn send_message(email: &str) {
 }
 
 fn main() {
-    let mut sender = String::new();
+    let mut sender = "ketua@kelompoksatu.com";
     let mut recipient = String::new();
     let mut subject = String::new();
     let mut body = String::new();
@@ -45,10 +45,6 @@ fn main() {
     println!("=== Email Client ===");
 
     loop {
-        print!("From: ");
-        io::stdout().flush().unwrap();
-        io::stdin().read_line(&mut sender).unwrap();
-        sender = sender.trim().to_string();
         print!("To: ");
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut recipient).unwrap();
@@ -63,7 +59,7 @@ fn main() {
         body = body.trim().to_string();
 
         let email = Email {
-            sender: sender.clone(),
+            sender: sender.to_string(),
             recipient: recipient.clone(),
             subject: subject.clone(),
             body: body.clone(),
@@ -80,7 +76,6 @@ fn main() {
         if choose.eq_ignore_ascii_case("n") {
             break;
         }
-        sender.clear();
         recipient.clear();
         body.clear();
     }

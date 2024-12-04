@@ -214,6 +214,7 @@ dependencies = [
 name = "forwarder"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-smtp",
  "lettre",
  "serde",
