@@ -33,10 +33,7 @@ struct StateMachine {
 }
 
 impl StateMachine {
-    const OH_HAI: &'static [u8] = b"220 kelompok1\n";
-    const KK: &'static [u8] = b"250 Ok\n";
-    const AUTH_OK: &'static [u8] = b"235 Ok\n";
-    const SEND_DATA_PLZ: &'static [u8] = b"354 End data with <CR><LF>.<CR><LF>\n";
+    const OH_HAI: &'static [u8] = b"220 SMTP SERVER KELOMPOK 1 TRI B \n";
     const KTHXBYE: &'static [u8] = b"221 Bye\n";
     const HOLD_YOUR_HORSES: &'static [u8] = &[];
 
@@ -127,9 +124,9 @@ impl StateMachine {
                     Ok(b"354 Start mail input; end with <CR><LF>.<CR><LF>\r\n")
                 }
             }
-            ("quit", _) => {
-                tracing::trace!("Closing connection");
-                Ok(b"221 Bye\r\n")
+            ("quit", State::ReceivingData(mail)) => {
+                self.state = State::Received(mail);
+                Ok(StateMachine::KTHXBYE)
             }
             (_, State::ReceivingData(mut mail)) => {
                 tracing::trace!("Appending data");
@@ -146,7 +143,10 @@ impl StateMachine {
                             mail.to,
                             mail.data
                         );
-                        self.state = State::Received(mail);
+                        mail.data += raw_msg;
+                        self.state = State::ReceivingData(mail);
+
+                        // self.state = State::Received(mail);
                         Ok(b"250 OK\r\n")
                     }
                 } else {

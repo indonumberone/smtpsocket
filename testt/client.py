@@ -31,5 +31,5 @@ def send_message(forwarder_ip, forwarder_port, email_message):
 
 if __name__ == "__main__":
     FORWARDER_IP = "127.0.0.1"  # Localhost IP for testing
-    FORWARDER_PORT = 1234   # Port used by Forwarder
+    FORWARDER_PORT = 1239   # Port used by Forwarder
     client_interface(FORWARDER_IP, FORWARDER_PORT)
