@@ -56,5 +56,5 @@ def start_forwarder(server_ip, server_port):
 
 if __name__ == "__main__":
     SERVER_IP = "127.0.0.1"
-    SERVER_PORT = 1287
+    SERVER_PORT = 1239
     start_forwarder(SERVER_IP, SERVER_PORT)
