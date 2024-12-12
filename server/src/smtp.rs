@@ -3,12 +3,8 @@ use anyhow::{Context, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-// use std::fs::File;
 use std::fs::{self, OpenOptions};
-// use std::io::Write;
-// use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-// use tokio::sync::Mutex;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Mail {
@@ -162,9 +158,9 @@ impl StateMachine {
         }
     }
 
-    // fn legal_recipient(to: &str) -> bool {
-    //     !to.contains("admin") && !to.contains("postmaster") && !to.contains("hostmaster")
-    // }
+    fn legal_recipient(to: &str) -> bool {
+        !to.contains("admin") && !to.contains("postmaster") && !to.contains("hostmaster")
+    }
 }
 
 pub struct Server {
