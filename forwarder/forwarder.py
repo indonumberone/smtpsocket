@@ -34,7 +34,7 @@ def handle_client(client_socket):
         email_data = json.loads(data.replace("'", "\""))  # Parse the string as JSON
         print(f"Received email data: {email_data}")
         result = send_email_via_smtp(email_data)  # Kirim email via SMTP (ke PC3)
-        print(f"iki lo hasil e {result.encode()}")
+        print(f"Results {result.encode()}")
         client_socket.sendall(result.encode())
 
     except Exception as e:
